@@ -3,7 +3,7 @@ spring:
     name: discovery-service
 
 server:
-  port: 8761
+  port: ${PORT:7860}
 
 eureka:
   client:

@@ -131,14 +131,17 @@ services:
   tracking-service:
     build: ./tracking-service
     ports:
-      - "8086:8086"
+      - "8086:7860"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/tracking_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_URL=http://discovery-service:8761/eureka/
+      - PORT=7860
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/tracking_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Ennaqui888,
+      - EUREKA_URL=http://discovery-service:7860/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=localhost
+      - EUREKA_NONSECURE_PORT_ENABLED=true
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
