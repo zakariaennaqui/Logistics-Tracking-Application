@@ -5,18 +5,19 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: { 
+  headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // This is crucial for CORS with authentication
+  withCredentials: false, // This is crucial for CORS with authentication
 });
 
 export const authService = {
   register: async (userData: RegisterRequest) => {
     try {
-      const response = await api.post('/api/auth/register', userData, {
-        withCredentials: true
-      });
+      // const response = await api.post('/api/auth/register', userData, {
+      //   withCredentials: true
+      // });
+      const response = await api.post('/api/auth/register', userData);
       return response.data;
     } catch (error: any) {
       console.error("Register error:", error);
@@ -45,7 +46,7 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     // Ensure credentials are included for all requests
-    config.withCredentials = true;
+    config.withCredentials = false;
     return config;
   },
   (error) => Promise.reject(error)

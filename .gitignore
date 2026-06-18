@@ -37,3 +37,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+deploy-ennaquiensa-pixel.bat
+deploy-theuone.bat
+deploy-theutwo.bat
+hf-deploy-temp/
