@@ -526,6 +526,201 @@ GET  /api/stocks/{warehouseId}      # Stock d'un entrepôt
 
 ---
 
+## 🗃️ Modèles de Données (Entités JPA)
+
+![Entity Relationship Diagram](docs/data_models.png)
+
+### Order (Commande)
+```java
+@Entity @Table(name = "orders")
+public class Order {
+    Long id;
+    String reference;        // Unique — ex: "CMD-2025-00042"
+    Long userId;             // → user-service
+    Long warehouseId;        // → warehouse-service
+    Long deliveryId;         // → delivery-service (après expédition)
+    BigDecimal subtotal;
+    BigDecimal shippingCost;
+    BigDecimal totalAmount;
+    String currency = "MAD"; // Dirham marocain
+    OrderStatus status;      // PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED
+    PaymentStatus paymentStatus; // UNPAID → PAID → REFUNDED
+    List<OrderItem> items;
+}
+```
+
+### Livraison (Delivery)
+```java
+@Entity @Table(name = "livraisons")
+public class Livraison {
+    Long idLivraison;
+    Long orderId;            // → order-service
+    Long clientId;           // → user-service
+    Long livreurId;          // → user-service (livreur assigné)
+    EtatLivraison etat;      // EN_ATTENTE → EN_COURS → LIVREE / ECHOUEE
+    TypeLivraison type;      // STANDARD | EXPRESS ⚡ | FRAGILE ⚠️
+    // Coordonnées GPS origine (entrepôt)
+    Double latitudeOrigine, longitudeOrigine;
+    // Coordonnées GPS destination (client)
+    Double latitudeDestination, longitudeDestination;
+    Double distanceKm;
+    Double prixLivraison;
+    List<Colis> colisList;   // Colis associés
+}
+```
+
+### Entrepôt & Stock
+```java
+@Entity @Table(name = "entrepots")
+public class Entrepot { Long id; String nom; String adresse; String ville; Integer capacite; Double latitude; Double longitude; }
+
+@Entity @Table(name = "stocks")
+public class Stock { Long id; Long entrepotId; Long productId; Integer quantite; }
+```
+
+---
+
+## 🔄 Cycle de Vie d'une Commande
+
+![Order and Delivery Lifecycle](docs/order_lifecycle.png)
+
+### Statuts de Commande (`OrderStatus`)
+| Statut | Signification |
+|---|---|
+| `PENDING` | Commande créée, en attente de confirmation |
+| `CONFIRMED` | Commande confirmée par l'admin/manager |
+| `PROCESSING` | En cours de préparation en entrepôt |
+| `SHIPPED` | Expédiée — une livraison est créée |
+| `DELIVERED` | Livrée au client |
+| `CANCELLED` | Annulée |
+
+### Statuts de Livraison (`EtatLivraison`)
+| Statut | Signification |
+|---|---|
+| `EN_ATTENTE` | Livraison créée, livreur non assigné |
+| `EN_COURS` | Livreur assigné, en route |
+| `LIVREE` | Colis remis au client |
+| `ECHOUEE` | Tentative échouée |
+| `ANNULEE` | Livraison annulée |
+
+---
+
+## 🗺️ Service de Calcul d'Itinéraires (route-service)
+
+Le `route-service` intègre l'API **OpenRouteService** pour calculer les itinéraires réels entre entrepôts et clients.
+
+```
+Client React → POST /api/routes/calculate
+{
+  "origine": { "lat": 33.5731, "lng": -7.5898 },       // Casablanca
+  "destination": { "lat": 34.0209, "lng": -6.8416 }    // Rabat
+}
+  ↓
+route-service → OpenRouteService API
+  ↓
+Réponse: { distanceKm: 87.3, durationMin: 72, etapes: [...] }
+```
+
+**Modèles :**
+```java
+@Entity class Itineraire {
+    Long id; Long livraisonId;
+    Double distanceTotaleKm;
+    Integer dureeEstimeeMinutes;
+    StatutItineraire statut;  // EN_ATTENTE | EN_COURS | TERMINE
+    TypeCalcul type;          // OPTIMAL | RAPIDE | ECONOMIQUE
+    List<Etape> etapes;
+}
+
+@Entity class Etape {
+    Long id; Integer ordre;
+    String nomLieu; Double latitude; Double longitude;
+    Double distanceDepuisPrecedente; Integer dureeMinutes;
+}
+```
+
+---
+
+## 🖥️ Pages Frontend par Rôle
+
+![Frontend Pages by Role](docs/frontend_pages.png)
+
+### 🏠 Landing Page (visiteurs non connectés)
+Composants : `Header`, `Hero`, `Features`, `Stats`, `Testimonial`, `CTASection`, `Footer`
+
+### 🔴 ADMIN
+| Page | Fichier | Description |
+|---|---|---|
+| Dashboard Analytique | `DashboardHome.tsx` | Vue globale, statistiques, graphiques |
+| Gestion Utilisateurs | `Users.tsx` | Liste et gestion de tous les users |
+| Liste Clients | `Clients.tsx` | Vue filtrée des clients |
+
+### 🟣 MANAGER
+| Page | Fichier | Description |
+|---|---|---|
+| Dashboard | `ManagerDashboardOverview.tsx` | KPIs manager, activité récente |
+| Livraisons | `DeliveriesPage.tsx` | Toutes les livraisons, assignation livreurs |
+| Carte GPS | `MapView.tsx` | Carte interactive avec positions en temps réel |
+| Livreurs | `LivreursPage.tsx` | Gestion des livreurs |
+| Entrepôt | `WarehousePage.tsx` | Gestion des stocks |
+| Produits | `ListProducts.tsx` | Catalogue produits, CRUD |
+| Analytics | `AnalyticsPage.tsx` | Statistiques avancées |
+| Notifications | `NotificationPage.tsx` | Centre de notifications |
+
+### 🟢 LIVREUR
+| Page | Fichier | Description |
+|---|---|---|
+| Dashboard | `LivreurDashboardOverview.tsx` | Livraisons du jour, stats |
+| Mes Livraisons | `LivreurDeliveriesPage.tsx` | Liste, mise à jour statuts |
+| Carte | `LivreurMapView.tsx` | Navigation GPS temps réel |
+| Entrepôt | `LivreurWarehousePage.tsx` | Accès entrepôt pour collecte |
+| Notifications | `LivreurNotificationsPage.tsx` | Alertes missions |
+| Analytics | `LivreurAnalyticsPage.tsx` | Performances personnelles |
+
+### 🔵 CLIENT
+| Page | Fichier | Description |
+|---|---|---|
+| Dashboard | `ClientDashboardOverview.tsx` | Commandes récentes, statuts |
+| Créer Commande | `CreateOrderPage.tsx` | Formulaire de commande avec produits |
+| Mes Commandes | `MyOrdersPage.tsx` | Historique complet |
+| Détail Commande | `OrderDetailsPage.tsx` | Détails + tracking livraison |
+| Notifications | `ClientNotificationsPage.tsx` | Mises à jour commandes |
+| Profil | `Profile.tsx` | Informations personnelles |
+
+---
+
+## 🐳 Docker Compose — Lancement Rapide
+
+Pour lancer tout le projet avec Docker (sans installer Maven) :
+
+```bash
+docker-compose up --build
+```
+
+Le `docker-compose.yml` orchestre :
+- 1 container PostgreSQL (toutes les bases)
+- 1 container par microservice (10 total)
+- 1 container frontend Nginx
+
+```yaml
+# Exemple d'un service dans docker-compose.yml
+  user-service:
+    build: ./user-service
+    ports:
+      - "8081:7860"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/users_db
+      - EUREKA_URL=http://discovery-service:7860/eureka/
+      - PORT=7860
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+```
+
+---
+
 ## 📁 Structure du Projet
 
 ```
