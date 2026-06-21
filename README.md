@@ -1,5 +1,6 @@
 <div align="center">
 
+<!-- Tech Badges -->
 <img src="https://img.shields.io/badge/Spring_Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/>
 <img src="https://img.shields.io/badge/Spring_Cloud-2024-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
 <img src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white"/>
@@ -526,9 +527,11 @@ GET  /api/stocks/{warehouseId}      # Stock d'un entrepôt
 
 ---
 
-## 🗃️ Modèles de Données (Entités JPA)
+## 🗃️ Modèles de Données — Diagramme UML Complet
 
-![Entity Relationship Diagram](docs/data_models.png)
+> Diagramme UML généré depuis le code source réel du projet — toutes les entités JPA avec attributs, méthodes et relations.
+
+![Diagramme UML Complet du Projet](docs/uml_classes.png)
 
 ### Order (Commande)
 ```java
