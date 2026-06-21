@@ -3,19 +3,17 @@
 <!-- Tech Badges -->
 <img src="https://img.shields.io/badge/Spring_Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/>
 <img src="https://img.shields.io/badge/Spring_Cloud-2024-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
-<img src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white"/>
 <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black"/>
 <img src="https://img.shields.io/badge/PostgreSQL-NeonDB-4169E1?style=for-the-badge&logo=postgresql&logoColor=white"/>
 <img src="https://img.shields.io/badge/Docker-HuggingFace-FF6F00?style=for-the-badge&logo=docker&logoColor=white"/>
 <img src="https://img.shields.io/badge/Vercel-Frontend-000000?style=for-the-badge&logo=vercel&logoColor=white"/>
 
-# 🚚 Livrago — Application de Suivi Logistique
+# Livrago — Application de Suivi Logistique
 
-**Architecture Microservices Java EE · Spring Boot 3.5 · Spring Cloud · React 18**
+**Architecture Microservices Java EE · Spring Boot · Spring Cloud · React**
 
 [![GitHub](https://img.shields.io/badge/GitHub-Logistics--Tracking--Application-181717?style=flat-square&logo=github)](https://github.com/zakariaennaqui/Logistics-Tracking-Application)
 [![Demo](https://img.shields.io/badge/🌐_Demo-logistics--tracking.vercel.app-00C7B7?style=flat-square)](https://logistics-tracking-application.vercel.app)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 > Projet Java EE — ENSA Berrechid · S7 · 2025
 
@@ -23,58 +21,58 @@
 
 ---
 
-## 📋 Table des Matières
+## Table des Matières
 
-- [Vue d'Ensemble](#-vue-densemble)
-- [Architecture Globale](#-architecture-globale)
-- [Comment Fonctionnent les Microservices](#-comment-fonctionnent-les-microservices-spring-boot)
-- [API Gateway & Routage](#-api-gateway--routage)
-- [Authentification JWT](#-authentification-jwt--spring-security)
-- [Les 9 Microservices](#-les-9-microservices)
-- [Rôles Utilisateurs](#-rôles-utilisateurs)
-- [Structure d'un Microservice](#-structure-interne-dun-microservice)
-- [Technologies](#-technologies-utilisées)
-- [Lancement Local](#-lancement-en-local)
+- [Vue d'Ensemble](#vue-densemble)
+- [Architecture Globale](#architecture-globale)
+- [Comment Fonctionnent les Microservices](#comment-fonctionnent-les-microservices-spring-boot)
+- [API Gateway & Routage](#api-gateway--routage)
+- [Authentification JWT](#authentification-jwt--spring-security)
+- [Les 9 Microservices](#les-9-microservices)
+- [Rôles Utilisateurs](#rôles-utilisateurs)
+- [Structure d'un Microservice](#structure-interne-dun-microservice)
+- [Technologies](#technologies-utilisées)
+- [Lancement Local](#lancement-en-local)
 - [Déploiement Cloud](#-déploiement-en-production)
-- [API Reference](#-api-reference)
+- [API Reference](#api-reference)
 
 ---
 
-## 🌍 Vue d'Ensemble
+## Vue d'Ensemble
 
 **Livrago** est une plateforme logistique complète construite en **architecture microservices Java EE**. Elle permet à quatre types d'utilisateurs (Admin, Client, Livreur, Manager) de gérer l'intégralité du cycle logistique : commandes, entrepôts, livraisons, produits, itinéraires et suivi GPS en temps réel.
 
 ### Fonctionnalités principales
 | Fonctionnalité | Description |
 |---|---|
-| 🔐 Authentification JWT | Login/Register avec rôles Spring Security |
-| 📦 Gestion des Commandes | CRUD complet, statuts, items |
-| 🚚 Suivi des Livraisons | Colis, livreurs assignés, statuts |
-| 🏭 Gestion d'Entrepôts | Stocks, inventaire, localisation |
-| 📍 Tracking GPS Temps Réel | WebSocket STOMP, carte interactive |
-| 🗺️ Calcul d'Itinéraires | Via OpenRouteService API |
-| 🔔 Notifications | Système de notifications utilisateurs |
-| 🛍️ Catalogue Produits | Produits, catégories |
-| 📊 Dashboard Analytics | Statistiques par rôle |
+| Authentification JWT | Login/Register avec rôles Spring Security |
+| Gestion des Commandes | CRUD complet, statuts, items |
+| Suivi des Livraisons | Colis, livreurs assignés, statuts |
+| Gestion d'Entrepôts | Stocks, inventaire, localisation |
+| Tracking GPS Temps Réel | WebSocket STOMP, carte interactive |
+| Calcul d'Itinéraires | Via OpenRouteService API |
+| Notifications | Système de notifications utilisateurs |
+| Catalogue Produits | Produits, catégories |
+| Dashboard Analytics | Statistiques par rôle |
 
 ---
 
-## 🏗️ Architecture Globale
+## Architecture Globale
 
-![Architecture Microservices Livrago](docs/architecture.png)
+![Architecture Microservices Livrago](docs/architecture_diagram_1782055800736.png)
 
 L'application est découpée en **10 services indépendants** (9 microservices + 1 frontend), chacun avec sa propre base de données PostgreSQL sur NeonDB.
 
 ### Pourquoi les Microservices ?
 
 ```
-❌ Approche Monolithique               ✅ Approche Microservices
+✕ Approche Monolithique               ✓ Approche Microservices
 ────────────────────                   ────────────────────────
 ┌──────────────────┐                  ┌────┐ ┌────┐ ┌────┐
 │ TOUT dans 1 app  │                  │ US │ │ OS │ │ DS │
 │                  │                  └────┘ └────┘ └────┘
 │ Users+Orders+    │                  ┌────┐ ┌────┐ ┌────┐
-│ Deliveries+      │   →→→ →→→ →→→   │ WS │ │ TS │ │ NS │
+│ Deliveries+      │   →→→ →→→ →→→    │ WS │ │ TS │ │ NS │
 │ Products+...     │                  └────┘ └────┘ └────┘
 │                  │                  ┌────┐ ┌────┐
 │ Si 1 bug → TOUT  │                  │ PS │ │ RS │
@@ -87,7 +85,7 @@ L'application est découpée en **10 services indépendants** (9 microservices +
 
 ---
 
-## ⚙️ Comment Fonctionnent les Microservices Spring Boot
+## Comment Fonctionnent les Microservices Spring Boot
 
 ### 1. Service Discovery — Eureka Server
 
@@ -104,22 +102,22 @@ eureka.client.fetch-registry=true
 **Résultat dans Eureka Dashboard** (`http://localhost:8761`) :
 ```
 Instances registered with Eureka:
-  USER-SERVICE         → 192.168.1.10:8081  ✅ UP
-  ORDER-SERVICE        → 192.168.1.11:8082  ✅ UP
-  DELIVERY-SERVICE     → 192.168.1.12:8083  ✅ UP
-  WAREHOUSE-SERVICE    → 192.168.1.13:8084  ✅ UP
-  TRACKING-SERVICE     → 192.168.1.14:8086  ✅ UP
-  NOTIFICATION-SERVICE → 192.168.1.15:8087  ✅ UP
-  PRODUCT-SERVICE      → 192.168.1.16:8088  ✅ UP
-  ROUTE-SERVICE        → 192.168.1.17:8089  ✅ UP
-  API-GATEWAY          → 192.168.1.18:8888  ✅ UP
+  USER-SERVICE         → 192.168.1.10:8081  ✓ UP
+  ORDER-SERVICE        → 192.168.1.11:8082  ✓ UP
+  DELIVERY-SERVICE     → 192.168.1.12:8083  ✓ UP
+  WAREHOUSE-SERVICE    → 192.168.1.13:8084  ✓ UP
+  TRACKING-SERVICE     → 192.168.1.14:8086  ✓ UP
+  NOTIFICATION-SERVICE → 192.168.1.15:8087  ✓ UP
+  PRODUCT-SERVICE      → 192.168.1.16:8088  ✓ UP
+  ROUTE-SERVICE        → 192.168.1.17:8089  ✓ UP
+  API-GATEWAY          → 192.168.1.18:8888  ✓ UP
 ```
 
 ---
 
-## 🌐 API Gateway & Routage
+## API Gateway & Routage
 
-![API Gateway Routes](docs/gateway.png)
+![API Gateway Routes](docs/api_gateway_routes_1782055876474.png)
 
 La Gateway est le **point d'entrée unique** — le frontend ne connaît qu'une seule URL.
 
@@ -160,9 +158,10 @@ spring:
 
 ---
 
-## 🔐 Authentification JWT & Spring Security
+## Authentification JWT & Spring Security
 
 ![JWT Authentication Flow](docs/jwt.png)
+![JWT Authentication Flow](docs/jwt_auth_flow_1782055887671.png)
 
 ### Flux complet
 1. Client envoie `POST /api/auth/login` avec `{email, password}`
@@ -189,24 +188,24 @@ spring:
 
 ---
 
-## 📡 Les 9 Microservices
+## Les 9 Microservices
 
 | # | Service | Port | Rôle | Base de données |
 |---|---|---|---|---|
-| 🔍 | `discovery-service` | **8761** | Eureka — annuaire de tous les services | — |
-| 🌐 | `api-gateway` | **8888** | Routage + sécurité JWT | — |
-| 👤 | `user-service` | **8081** | Auth, JWT, rôles (Admin/Client/Livreur/Manager) | `users_db` |
-| 📦 | `order-service` | **8082** | Commandes, items, statuts | `orders_db` |
-| 🚚 | `delivery-service` | **8083** | Livraisons, colis, assignation livreur | `delivery_db` |
-| 🏭 | `warehouse-service` | **8084** | Entrepôts, stocks, inventaire | `warehouses_db` |
-| 📍 | `tracking-service` | **8086** | GPS temps réel via WebSocket STOMP | `tracking_db` |
-| 🔔 | `notification-service` | **8087** | Notifications utilisateurs | `notifications_db` |
-| 🛍️ | `product-service` | **8088** | Catalogue produits & catégories | `products_db` |
-| 🗺️ | `route-service` | **8089** | Calcul d'itinéraires OpenRouteService | `routes_db` |
+| 1 | `discovery-service` | **8761** | Eureka — annuaire de tous les services | — |
+| 2 | `api-gateway` | **8888** | Routage + sécurité JWT | — |
+| 3 | `user-service` | **8081** | Auth, JWT, rôles (Admin/Client/Livreur/Manager) | `users_db` |
+| 4 | `order-service` | **8082** | Commandes, items, statuts | `orders_db` |
+| 5 | `delivery-service` | **8083** | Livraisons, colis, assignation livreur | `delivery_db` |
+| 6 | `warehouse-service` | **8084** | Entrepôts, stocks, inventaire | `warehouses_db` |
+| 7 | `tracking-service` | **8086** | GPS temps réel via WebSocket STOMP | `tracking_db` |
+| 8 | `notification-service` | **8087** | Notifications utilisateurs | `notifications_db` |
+| 9 | `product-service` | **8088** | Catalogue produits & catégories | `products_db` |
+| 10 | `route-service` | **8089** | Calcul d'itinéraires OpenRouteService | `routes_db` |
 
 ---
 
-## 👥 Rôles Utilisateurs
+## Rôles Utilisateurs
 
 ![User Roles and Permissions](docs/roles.png)
 
@@ -238,7 +237,7 @@ L'application gère **4 rôles** avec des permissions différentes via Spring Se
 
 ---
 
-## 🏛️ Structure Interne d'un Microservice
+## Structure Interne d'un Microservice
 
 ![Microservice Internal Structure](docs/microservice.png)
 
@@ -311,7 +310,7 @@ public class User {
 
 ---
 
-## 📡 Tracking GPS Temps Réel — WebSocket STOMP
+## Tracking GPS Temps Réel — WebSocket STOMP
 
 ```
 Livreur (app mobile / web)
@@ -329,7 +328,7 @@ Carte leaflet/maps → mise à jour en temps réel
 
 ---
 
-## 🛠️ Technologies Utilisées
+## Technologies Utilisées
 
 ### Backend
 | Technologie | Version | Usage |
@@ -361,14 +360,14 @@ Carte leaflet/maps → mise à jour en temps réel
 | Technologie | Usage |
 |---|---|
 | Docker (multi-stage) | Conteneurisation — build depuis le code source |
-| HuggingFace Spaces | Hébergement des 9 microservices Java (gratuit) |
-| NeonDB | 8 bases PostgreSQL serverless (gratuit) |
-| Vercel | Hébergement du frontend React (gratuit) |
+| HuggingFace Spaces | Hébergement des 9 microservices Java |
+| NeonDB | 8 bases PostgreSQL serverless |
+| Vercel | Hébergement du frontend React |
 | GitHub | Versioning et CI/CD |
 
 ---
 
-## 🚀 Lancement en Local
+## Lancement en Local
 
 ### Prérequis
 ```bash
@@ -405,7 +404,7 @@ build-all.bat
 
 ### 4. Démarrer dans l'ordre
 
-> ⚠️ L'ordre de démarrage est crucial !
+> L'ordre de démarrage est crucial !
 
 ```bash
 # 1. PREMIER — Eureka Server (annuaire)
@@ -448,19 +447,18 @@ server.port=${PORT:8081}
 
 ![Cloud Deployment Architecture](docs/deployment.png)
 
-### Architecture Cloud 100% Gratuite
+### Architecture Cloud
 
-| Couche | Plateforme | Coût |
-|---|---|---|
-| Frontend React | **Vercel** | Gratuit |
-| 9 Microservices Java | **HuggingFace Spaces** (Docker) | Gratuit |
-| 8 Bases PostgreSQL | **NeonDB** (Serverless) | Gratuit |
+| Couche | Plateforme |
+|---|---|
+| Frontend React | **Vercel** |
+| 9 Microservices Java | **HuggingFace Spaces** (Docker) |
+| 8 Bases PostgreSQL | **NeonDB** (Serverless) |
 
 ### Pourquoi HuggingFace Spaces ?
-- ✅ **Illimité** en nombre de services (contrairement à Railway : 1 service)
-- ✅ **2 vCPU + 16 GB RAM** par Space
-- ✅ **Docker multi-stage** — compile le JAR directement dans le cloud
-- ✅ **Gratuit** — parfait pour les projets académiques
+- ✓ **multi** en nombre de services (contrairement à Railway : 1 service)
+- ✓ **2 vCPU + 16 GB RAM** par Space
+- ✓ **Docker multi-stage** — compile le JAR directement dans le cloud
 
 ### Dockerfile multi-stage utilisé
 ```dockerfile
@@ -483,7 +481,7 @@ ENTRYPOINT ["sh", "-c", "java -Xmx256m -jar app.jar"]
 
 ---
 
-## 📖 API Reference
+## API Reference
 
 ### Authentification
 ```http
@@ -527,7 +525,7 @@ GET  /api/stocks/{warehouseId}      # Stock d'un entrepôt
 
 ---
 
-## 🗃️ Modèles de Données — Diagramme UML Complet
+## Modèles de Données — Diagramme UML Complet
 
 > Diagramme UML généré depuis le code source réel du projet — toutes les entités JPA avec attributs, méthodes et relations.
 
@@ -561,7 +559,7 @@ public class Livraison {
     Long clientId;           // → user-service
     Long livreurId;          // → user-service (livreur assigné)
     EtatLivraison etat;      // EN_ATTENTE → EN_COURS → LIVREE / ECHOUEE
-    TypeLivraison type;      // STANDARD | EXPRESS ⚡ | FRAGILE ⚠️
+    TypeLivraison type;      // STANDARD | EXPRESS ✓ | FRAGILE ✕
     // Coordonnées GPS origine (entrepôt)
     Double latitudeOrigine, longitudeOrigine;
     // Coordonnées GPS destination (client)
@@ -583,7 +581,7 @@ public class Stock { Long id; Long entrepotId; Long productId; Integer quantite;
 
 ---
 
-## 🔄 Cycle de Vie d'une Commande
+## Cycle de Vie d'une Commande
 
 ![Order and Delivery Lifecycle](docs/order_lifecycle.png)
 
@@ -608,7 +606,7 @@ public class Stock { Long id; Long entrepotId; Long productId; Integer quantite;
 
 ---
 
-## 🗺️ Service de Calcul d'Itinéraires (route-service)
+## Service de Calcul d'Itinéraires (route-service)
 
 Le `route-service` intègre l'API **OpenRouteService** pour calculer les itinéraires réels entre entrepôts et clients.
 
@@ -644,11 +642,11 @@ Réponse: { distanceKm: 87.3, durationMin: 72, etapes: [...] }
 
 ---
 
-## 🖥️ Pages Frontend par Rôle
+## Pages Frontend par Rôle
 
 ![Frontend Pages by Role](docs/frontend_pages.png)
 
-### 🏠 Landing Page (visiteurs non connectés)
+### Landing Page (visiteurs non connectés)
 Composants : `Header`, `Hero`, `Features`, `Stats`, `Testimonial`, `CTASection`, `Footer`
 
 ### 🔴 ADMIN
@@ -692,7 +690,7 @@ Composants : `Header`, `Hero`, `Features`, `Stats`, `Testimonial`, `CTASection`,
 
 ---
 
-## 🐳 Docker Compose — Lancement Rapide
+## Docker Compose — Lancement Rapide
 
 Pour lancer tout le projet avec Docker (sans installer Maven) :
 
@@ -724,26 +722,25 @@ Le `docker-compose.yml` orchestre :
 
 ---
 
-## 📁 Structure du Projet
+## Structure du Projet
 
 ```
 Logistics-Tracking-Application/
-├── 📂 discovery-service/       Eureka Server :8761
-├── 📂 api-gateway/             Spring Cloud Gateway :8888
-├── 📂 user-service/            Auth + Users :8081
-├── 📂 order-service/           Commandes :8082
-├── 📂 delivery-service/        Livraisons :8083
-├── 📂 warehouse-service/       Entrepôts :8084
-├── 📂 tracking-service/        GPS Tracking :8086
-├── 📂 notification-service/    Notifications :8087
-├── 📂 product-service/         Produits :8088
-├── 📂 route-service/           Itinéraires :8089
-├── 📂 frontend/                React + TypeScript :5173
-├── 📂 docs/                    Images & Schémas README
-├── 🐳 docker-compose.yml       Lancement local avec Docker
-├── 🔨 build-all.bat            Compilation automatique (Windows)
-├── 🚀 deploy-to-huggingface.bat Déploiement automatique
-└── 📖 README.md                Ce fichier
+├── discovery-service/       Eureka Server :8761
+├── api-gateway/             Spring Cloud Gateway :8888
+├── user-service/            Auth + Users :8081
+├── order-service/           Commandes :8082
+├── delivery-service/        Livraisons :8083
+├── warehouse-service/       Entrepôts :8084
+├── tracking-service/        GPS Tracking :8086
+├── notification-service/    Notifications :8087
+├── product-service/         Produits :8088
+├── route-service/           Itinéraires :8089
+├── frontend/                React + TypeScript :5173
+├── docs/                    Images & Schémas README
+├── docker-compose.yml       Lancement local avec Docker
+├── build-all.bat            Compilation automatique (Windows)
+└── deploy-to-huggingface.bat Déploiement automatique
 ```
 
 ---
