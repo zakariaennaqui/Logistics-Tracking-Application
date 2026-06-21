@@ -2,6 +2,7 @@
 
 <img src="https://img.shields.io/badge/Spring_Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/>
 <img src="https://img.shields.io/badge/Spring_Cloud-2024-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
+<img src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white"/>
 <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black"/>
 <img src="https://img.shields.io/badge/PostgreSQL-NeonDB-4169E1?style=for-the-badge&logo=postgresql&logoColor=white"/>
 <img src="https://img.shields.io/badge/Docker-HuggingFace-FF6F00?style=for-the-badge&logo=docker&logoColor=white"/>
@@ -9,10 +10,13 @@
 
 # 🚚 Livrago — Application de Suivi Logistique
 
-**Architecture Microservices Java EE · Spring Boot · Spring Cloud · React**
+**Architecture Microservices Java EE · Spring Boot 3.5 · Spring Cloud · React 18**
 
-[![GitHub](https://img.shields.io/badge/GitHub-Logistics--Tracking--Application-181717?style=flat&logo=github)](https://github.com/zakariaennaqui/Logistics-Tracking-Application)
-[![Live Demo](https://img.shields.io/badge/Live-logistics--tracking.vercel.app-00C7B7?style=flat&logo=vercel)](https://logistics-tracking-application.vercel.app)
+[![GitHub](https://img.shields.io/badge/GitHub-Logistics--Tracking--Application-181717?style=flat-square&logo=github)](https://github.com/zakariaennaqui/Logistics-Tracking-Application)
+[![Demo](https://img.shields.io/badge/🌐_Demo-logistics--tracking.vercel.app-00C7B7?style=flat-square)](https://logistics-tracking-application.vercel.app)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+
+> Projet Java EE — ENSA Berrechid · S7 · 2025
 
 </div>
 
@@ -21,243 +25,356 @@
 ## 📋 Table des Matières
 
 - [Vue d'Ensemble](#-vue-densemble)
-- [Comment Fonctionnent les Microservices Spring Boot](#-comment-fonctionnent-les-microservices-spring-boot)
-- [Architecture du Projet](#-architecture-du-projet)
+- [Architecture Globale](#-architecture-globale)
+- [Comment Fonctionnent les Microservices](#-comment-fonctionnent-les-microservices-spring-boot)
+- [API Gateway & Routage](#-api-gateway--routage)
+- [Authentification JWT](#-authentification-jwt--spring-security)
 - [Les 9 Microservices](#-les-9-microservices)
-- [Technologies Utilisées](#-technologies-utilisées)
-- [Lancement en Local](#-lancement-en-local)
-- [Déploiement en Production](#-déploiement-en-production)
+- [Rôles Utilisateurs](#-rôles-utilisateurs)
+- [Structure d'un Microservice](#-structure-interne-dun-microservice)
+- [Technologies](#-technologies-utilisées)
+- [Lancement Local](#-lancement-en-local)
+- [Déploiement Cloud](#-déploiement-en-production)
+- [API Reference](#-api-reference)
 
 ---
 
 ## 🌍 Vue d'Ensemble
 
-**Livrago** est une application complète de gestion logistique construite sur une **architecture microservices Java EE**. Elle permet de gérer les commandes, livraisons, entrepôts, produits, itinéraires et le suivi GPS en temps réel.
+**Livrago** est une plateforme logistique complète construite en **architecture microservices Java EE**. Elle permet à quatre types d'utilisateurs (Admin, Client, Livreur, Manager) de gérer l'intégralité du cycle logistique : commandes, entrepôts, livraisons, produits, itinéraires et suivi GPS en temps réel.
 
-> Ce projet a été réalisé dans le cadre du cours de **Programmation Java EE** à l'ENSA Berrechid (S7, 2025).
+### Fonctionnalités principales
+| Fonctionnalité | Description |
+|---|---|
+| 🔐 Authentification JWT | Login/Register avec rôles Spring Security |
+| 📦 Gestion des Commandes | CRUD complet, statuts, items |
+| 🚚 Suivi des Livraisons | Colis, livreurs assignés, statuts |
+| 🏭 Gestion d'Entrepôts | Stocks, inventaire, localisation |
+| 📍 Tracking GPS Temps Réel | WebSocket STOMP, carte interactive |
+| 🗺️ Calcul d'Itinéraires | Via OpenRouteService API |
+| 🔔 Notifications | Système de notifications utilisateurs |
+| 🛍️ Catalogue Produits | Produits, catégories |
+| 📊 Dashboard Analytics | Statistiques par rôle |
+
+---
+
+## 🏗️ Architecture Globale
+
+![Architecture Microservices Livrago](docs/architecture.png)
+
+L'application est découpée en **10 services indépendants** (9 microservices + 1 frontend), chacun avec sa propre base de données PostgreSQL sur NeonDB.
+
+### Pourquoi les Microservices ?
+
+```
+❌ Approche Monolithique               ✅ Approche Microservices
+────────────────────                   ────────────────────────
+┌──────────────────┐                  ┌────┐ ┌────┐ ┌────┐
+│ TOUT dans 1 app  │                  │ US │ │ OS │ │ DS │
+│                  │                  └────┘ └────┘ └────┘
+│ Users+Orders+    │                  ┌────┐ ┌────┐ ┌────┐
+│ Deliveries+      │   →→→ →→→ →→→   │ WS │ │ TS │ │ NS │
+│ Products+...     │                  └────┘ └────┘ └────┘
+│                  │                  ┌────┐ ┌────┐
+│ Si 1 bug → TOUT  │                  │ PS │ │ RS │
+│ plante           │                  └────┘ └────┘
+└──────────────────┘
+  Déploiement = 1 WAR                 Déploiement indépendant
+  Scaling impossible                  Scaling par service
+  Équipe bloquée sur 1 projet         Équipes parallèles
+```
 
 ---
 
 ## ⚙️ Comment Fonctionnent les Microservices Spring Boot
 
-### Le problème avec une application monolithique
+### 1. Service Discovery — Eureka Server
 
-Dans une application traditionnelle (**monolithe**), tout le code est dans **un seul projet** :
+Eureka est l'**annuaire centralisé** de tous les microservices. Chaque service s'y enregistre au démarrage et y envoie un *heartbeat* toutes les 30 secondes.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   MONOLITHE                          │
-│  Gestion Users + Commandes + Livraisons + Stock +   │
-│  Produits + Notifications + Tracking...             │
-│                                                      │
-│  → Si on déploie une MAJ, TOUT redémarre            │
-│  → Si un module plante, TOUT plante                 │
-│  → Difficile à faire évoluer en équipe              │
-└─────────────────────────────────────────────────────┘
-```
-
-### La solution : Microservices
-
-Chaque fonctionnalité devient un **service indépendant** avec sa propre base de données :
-
-```
-┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-│  Users   │  │ Commandes│  │Livraisons│  │  Stock   │
-│ :8081   │  │ :8082   │  │ :8083   │  │ :8084   │
-│  DB ↓   │  │  DB ↓   │  │  DB ↓   │  │  DB ↓   │
-│ users_db│  │orders_db│  │delivery │  │ warehouse│
-└──────────┘  └──────────┘  └──────────┘  └──────────┘
-```
-
-### Les composants clés de Spring Cloud
-
-#### 1️⃣ Service Discovery — Spring Eureka (`:8761`)
-
-Eureka est l'**annuaire** de tous les services. Chaque service s'enregistre au démarrage et indique où il est disponible.
-
-```
-┌─────────────────────────────────────────────┐
-│          EUREKA SERVER (Annuaire)            │
-│  ┌─────────────────────────────────────┐   │
-│  │  user-service     → 192.168.1.1:8081│   │
-│  │  order-service    → 192.168.1.2:8082│   │
-│  │  delivery-service → 192.168.1.3:8083│   │
-│  │  ...                                │   │
-│  └─────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-       ↑ Chaque service envoie un "heartbeat" toutes les 30s
-```
-
-**Configuration Spring Boot :**
-```properties
-# Pour s'enregistrer dans Eureka
+```yaml
+# application.properties de chaque microservice
+spring.application.name=user-service
 eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
 eureka.client.register-with-eureka=true
-spring.application.name=user-service
+eureka.client.fetch-registry=true
 ```
 
-#### 2️⃣ API Gateway — Spring Cloud Gateway (`:8888`)
-
-La **porte d'entrée unique** de l'application. Le client ne connaît qu'une seule URL. La Gateway redirige vers le bon service.
-
+**Résultat dans Eureka Dashboard** (`http://localhost:8761`) :
 ```
-Client React (Frontend)
-        │
-        ▼
-┌───────────────────────────────────────────────┐
-│         API GATEWAY :8888                     │
-│                                               │
-│  /api/users/**      → lb://user-service       │
-│  /api/orders/**     → lb://order-service      │
-│  /api/deliveries/** → lb://delivery-service   │
-│  /api/products/**   → lb://product-service    │
-│  ...                                          │
-└───────────────────────────────────────────────┘
-        │
-        ▼ lb:// = LoadBalanced via Eureka
-  Service approprié
+Instances registered with Eureka:
+  USER-SERVICE         → 192.168.1.10:8081  ✅ UP
+  ORDER-SERVICE        → 192.168.1.11:8082  ✅ UP
+  DELIVERY-SERVICE     → 192.168.1.12:8083  ✅ UP
+  WAREHOUSE-SERVICE    → 192.168.1.13:8084  ✅ UP
+  TRACKING-SERVICE     → 192.168.1.14:8086  ✅ UP
+  NOTIFICATION-SERVICE → 192.168.1.15:8087  ✅ UP
+  PRODUCT-SERVICE      → 192.168.1.16:8088  ✅ UP
+  ROUTE-SERVICE        → 192.168.1.17:8089  ✅ UP
+  API-GATEWAY          → 192.168.1.18:8888  ✅ UP
 ```
 
-**Configuration `application.yaml` :**
+---
+
+## 🌐 API Gateway & Routage
+
+![API Gateway Routes](docs/gateway.png)
+
+La Gateway est le **point d'entrée unique** — le frontend ne connaît qu'une seule URL.
+
+### Table de routage complète
+
+| Route Pattern | Service cible | Port local |
+|---|---|---|
+| `/api/auth/**` | `user-service` | 8081 |
+| `/api/users/**` | `user-service` | 8081 |
+| `/api/admin/**` | `user-service` | 8081 |
+| `/api/orders/**` | `order-service` | 8082 |
+| `/api/deliveries/**` | `delivery-service` | 8083 |
+| `/api/packages/**` | `delivery-service` | 8083 |
+| `/api/warehouses/**` | `warehouse-service` | 8084 |
+| `/api/stocks/**` | `warehouse-service` | 8084 |
+| `/api/products/**` | `product-service` | 8088 |
+| `/api/categories/**` | `product-service` | 8088 |
+| `/api/notifications/**` | `notification-service` | 8087 |
+| `/api/routes/**` | `route-service` | 8089 |
+| `WebSocket /ws/**` | `tracking-service` | 8086 |
+
 ```yaml
+# application.yaml de l'API Gateway
 spring:
   cloud:
     gateway:
       routes:
         - id: user-route
-          uri: lb://user-service    # lb = LoadBalancer Eureka
+          uri: lb://user-service    # lb:// = LoadBalancer via Eureka
           predicates:
             - Path=/api/users/**
+        - id: order-route
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+        # ... etc
 ```
 
-#### 3️⃣ Communication entre Services
+---
 
-Les services communiquent via **HTTP REST** avec l'aide d'Eureka pour résoudre les adresses.
+## 🔐 Authentification JWT & Spring Security
+
+![JWT Authentication Flow](docs/jwt.png)
+
+### Flux complet
+1. Client envoie `POST /api/auth/login` avec `{email, password}`
+2. `user-service` vérifie les credentials dans `users_db`
+3. Génère un **JWT Token** avec le rôle de l'utilisateur
+4. Token stocké dans `localStorage` côté frontend
+5. Chaque requête suivante inclut : `Authorization: Bearer {token}`
+6. Le filtre JWT de la Gateway valide le token à chaque requête
+
+### Structure du JWT Token
+```json
+{
+  "header": { "alg": "HS256", "typ": "JWT" },
+  "payload": {
+    "sub": "user@email.com",
+    "role": "ROLE_CLIENT",
+    "userId": 42,
+    "iat": 1720000000,
+    "exp": 1720086400
+  },
+  "signature": "..."
+}
+```
+
+---
+
+## 📡 Les 9 Microservices
+
+| # | Service | Port | Rôle | Base de données |
+|---|---|---|---|---|
+| 🔍 | `discovery-service` | **8761** | Eureka — annuaire de tous les services | — |
+| 🌐 | `api-gateway` | **8888** | Routage + sécurité JWT | — |
+| 👤 | `user-service` | **8081** | Auth, JWT, rôles (Admin/Client/Livreur/Manager) | `users_db` |
+| 📦 | `order-service` | **8082** | Commandes, items, statuts | `orders_db` |
+| 🚚 | `delivery-service` | **8083** | Livraisons, colis, assignation livreur | `delivery_db` |
+| 🏭 | `warehouse-service` | **8084** | Entrepôts, stocks, inventaire | `warehouses_db` |
+| 📍 | `tracking-service` | **8086** | GPS temps réel via WebSocket STOMP | `tracking_db` |
+| 🔔 | `notification-service` | **8087** | Notifications utilisateurs | `notifications_db` |
+| 🛍️ | `product-service` | **8088** | Catalogue produits & catégories | `products_db` |
+| 🗺️ | `route-service` | **8089** | Calcul d'itinéraires OpenRouteService | `routes_db` |
+
+---
+
+## 👥 Rôles Utilisateurs
+
+![User Roles and Permissions](docs/roles.png)
+
+L'application gère **4 rôles** avec des permissions différentes via Spring Security :
+
+### 🔴 ADMIN
+- Gestion complète des utilisateurs
+- Dashboard analytics global
+- Gestion des entrepôts et produits
+- Vue sur toutes les commandes
+
+### 🔵 CLIENT
+- Créer et suivre ses commandes
+- Voir l'historique de ses livraisons
+- Recevoir des notifications
+- Accéder au tracking GPS de sa commande
+
+### 🟢 LIVREUR
+- Voir ses livraisons assignées
+- Mettre à jour les statuts de livraison
+- Vue carte avec GPS temps réel
+- Notifications push sur ses missions
+
+### 🟣 MANAGER
+- Gérer les stocks d'entrepôt
+- Gérer le catalogue produits
+- Voir les commandes et livraisons
+- Analytics de son entrepôt
+
+---
+
+## 🏛️ Structure Interne d'un Microservice
+
+![Microservice Internal Structure](docs/microservice.png)
+
+Chaque service suit l'architecture en couches **MVC + Repository Pattern** :
 
 ```
-order-service  →  "Je veux vérifier le produit #42"
-      │
-      ▼  (via Eureka : product-service est sur 192.168.1.5:8082)
-product-service  →  répond avec les infos du produit
+user-service/
+├── UserServiceApplication.java         @SpringBootApplication
+├── config/
+│   ├── SecurityConfig.java             Spring Security + JWT filter
+│   └── CorsConfig.java                 CORS pour le frontend
+├── controller/
+│   ├── AuthController.java             POST /api/auth/login, /register
+│   └── UserController.java             GET/POST/PUT /api/users/**
+├── service/
+│   ├── UserService.java                Interface
+│   └── UserServiceImpl.java            @Service — logique métier
+├── repository/
+│   └── UserRepository.java             @Repository extends JpaRepository
+├── model/
+│   ├── User.java                       @Entity @Table("users")
+│   ├── Client.java                     @Entity — hérite de User
+│   ├── Livreur.java                    @Entity — hérite de User
+│   ├── Admin.java                      @Entity — hérite de User
+│   └── Manager.java                    @Entity — hérite de User
+├── dtos/
+│   ├── request/LoginRequest.java       @Valid DTO
+│   └── response/UserResponse.java      DTO sortant
+├── security/
+│   └── JwtFilter.java                  OncePerRequestFilter
+└── exceptions/
+    └── GlobalExceptionHandler.java     @ControllerAdvice
 ```
 
-#### 4️⃣ WebSocket — Tracking GPS temps réel
+### Exemple d'un Controller Spring Boot
+```java
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
 
-Le `tracking-service` utilise **Spring WebSocket + STOMP** pour envoyer les positions GPS en temps réel :
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest req) {
+        String token = userService.authenticate(req.getEmail(), req.getPassword());
+        return ResponseEntity.ok(new AuthResponse(token));
+    }
+}
+```
+
+### Exemple d'une Entity JPA
+```java
+@Entity
+@Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
+public class User {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    private String password;  // BCrypt hashé
+
+    @Enumerated(EnumType.STRING)
+    private Role role;  // ADMIN, CLIENT, LIVREUR, MANAGER
+}
+```
+
+---
+
+## 📡 Tracking GPS Temps Réel — WebSocket STOMP
 
 ```
-GPS Device / Livreur
-       │  POST /api/gps/position
-       ▼
+Livreur (app mobile / web)
+        │
+        ▼  POST /api/gps/position {lat, lng, deliveryId}
 tracking-service
-       │  SimpMessagingTemplate.convertAndSend("/topic/tracking")
-       ▼
-Frontend React (abonné au WebSocket)
-       │  Mise à jour de la carte en temps réel
+        │  SimpMessagingTemplate
+        │  .convertAndSend("/topic/tracking/{deliveryId}", position)
+        ▼
+Client React (abonné au topic)
+        │  stompClient.subscribe("/topic/tracking/42", callback)
+        ▼
+Carte leaflet/maps → mise à jour en temps réel
 ```
-
----
-
-## 🏗️ Architecture du Projet
-
-```
-livrago/
-├── discovery-service/          # Eureka Server (annuaire)
-├── api-gateway/                # Spring Cloud Gateway (routage)
-├── user-service/               # Gestion utilisateurs & auth JWT
-├── order-service/              # Gestion des commandes
-├── delivery-service/           # Gestion des livraisons & colis
-├── warehouse-service/          # Gestion des entrepôts & stocks
-├── product-service/            # Catalogue produits & catégories
-├── notification-service/       # Système de notifications
-├── route-service/              # Calcul d'itinéraires (OpenRouteService)
-├── tracking-service/           # Suivi GPS temps réel (WebSocket)
-└── frontend/                   # Interface React + TailwindCSS
-```
-
-### Diagramme de flux complet
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         LIVRAGO                                      │
-│                                                                       │
-│   [React Frontend :5173]                                             │
-│          │  HTTP/WebSocket                                           │
-│          ▼                                                           │
-│   [API Gateway :8888] ◄──── Point d'entrée unique                  │
-│          │  lb:// via Eureka                                         │
-│          ├──► [User Service :8081]        ──► PostgreSQL users_db    │
-│          ├──► [Order Service :8082]       ──► PostgreSQL orders_db   │
-│          ├──► [Delivery Service :8083]    ──► PostgreSQL delivery_db │
-│          ├──► [Warehouse Service :8084]   ──► PostgreSQL warehouse_db│
-│          ├──► [Tracking Service :8086]    ──► PostgreSQL tracking_db │
-│          ├──► [Notification Service :8087]──► PostgreSQL notif_db    │
-│          ├──► [Product Service :8088]     ──► PostgreSQL products_db │
-│          └──► [Route Service :8089]       ──► PostgreSQL routes_db   │
-│                                                                       │
-│   [Eureka Discovery :8761] ◄── Tous les services s'y enregistrent   │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔌 Les 9 Microservices
-
-| Service | Port | Rôle | Base de données |
-|---|---|---|---|
-| 🔍 `discovery-service` | **8761** | Annuaire Eureka — référence tous les services | — |
-| 🌐 `api-gateway` | **8888** | Routage et point d'entrée unique | — |
-| 👤 `user-service` | **8081** | Authentification JWT, rôles (admin/client/livreur) | `users_db` |
-| 📦 `order-service` | **8082** | Création et suivi des commandes | `orders_db` |
-| 🚚 `delivery-service` | **8083** | Livraisons, colis, assignation livreur | `delivery_db` |
-| 🏭 `warehouse-service` | **8084** | Entrepôts, stocks, inventaire | `warehouses_db` |
-| 📍 `tracking-service` | **8086** | GPS temps réel via WebSocket STOMP | `tracking_db` |
-| 🔔 `notification-service` | **8087** | Notifications utilisateurs | `notifications_db` |
-| 🛍️ `product-service` | **8088** | Catalogue produits et catégories | `products_db` |
-| 🗺️ `route-service` | **8089** | Calcul d'itinéraires via OpenRouteService | `routes_db` |
 
 ---
 
 ## 🛠️ Technologies Utilisées
 
 ### Backend
-| Technologie | Usage |
-|---|---|
-| **Java 17** | Langage principal |
-| **Spring Boot 3.5.7** | Framework microservices |
-| **Spring Cloud Gateway** | API Gateway / Routage |
-| **Spring Eureka** | Service Discovery |
-| **Spring WebSocket + STOMP** | Tracking GPS temps réel |
-| **Spring Security + JWT** | Authentification |
-| **Spring Data JPA + Hibernate** | ORM base de données |
-| **PostgreSQL** | Base de données relationnelle |
+| Technologie | Version | Usage |
+|---|---|---|
+| Java | 17 | Langage principal |
+| Spring Boot | 3.5.7 | Framework microservices |
+| Spring Cloud Gateway | 2024 | API Gateway et routage |
+| Spring Eureka | 2024 | Service Discovery |
+| Spring Security | 6.x | Authentification et autorisation |
+| JWT (jjwt) | 0.12 | Tokens d'authentification |
+| Spring WebSocket + STOMP | 3.5 | GPS temps réel |
+| Spring Data JPA | 3.5 | ORM |
+| Hibernate | 6.x | Implémentation JPA |
+| PostgreSQL Driver | 42.x | Connexion base de données |
+| Maven | 3.9 | Build et gestion des dépendances |
 
 ### Frontend
-| Technologie | Usage |
-|---|---|
-| **React 18** | Interface utilisateur |
-| **TypeScript** | Typage statique |
-| **TailwindCSS** | Styles |
-| **Axios** | Appels API REST |
-| **SockJS + STOMP** | WebSocket client |
+| Technologie | Version | Usage |
+|---|---|---|
+| React | 18 | Interface utilisateur |
+| TypeScript | 5.x | Typage statique |
+| TailwindCSS | 3.x | Styles |
+| Axios | 1.x | Appels API REST |
+| SockJS + STOMP | — | WebSocket client |
+| React Router | 6.x | Navigation |
+| Vite | 5.x | Build tool |
 
-### Infrastructure
+### Infrastructure & Déploiement
 | Technologie | Usage |
 |---|---|
-| **Docker** | Conteneurisation (multi-stage build) |
-| **NeonDB** | PostgreSQL serverless (8 bases gratuites) |
-| **HuggingFace Spaces** | Déploiement des 9 services Java (Docker) |
-| **Vercel** | Déploiement du frontend React |
+| Docker (multi-stage) | Conteneurisation — build depuis le code source |
+| HuggingFace Spaces | Hébergement des 9 microservices Java (gratuit) |
+| NeonDB | 8 bases PostgreSQL serverless (gratuit) |
+| Vercel | Hébergement du frontend React (gratuit) |
+| GitHub | Versioning et CI/CD |
 
 ---
 
 ## 🚀 Lancement en Local
 
 ### Prérequis
-- Java 17+
-- Maven 3.9+
-- PostgreSQL local (ou connexion NeonDB)
-- Node.js 20+
+```bash
+java -version    # Java 17+
+mvn -version     # Maven 3.9+
+node -v          # Node.js 20+
+```
 
 ### 1. Cloner le projet
 ```bash
@@ -265,117 +382,180 @@ git clone https://github.com/zakariaennaqui/Logistics-Tracking-Application.git
 cd Logistics-Tracking-Application
 ```
 
-### 2. Configurer les bases de données
-Créez ces bases dans PostgreSQL local :
+### 2. Configurer PostgreSQL local
+
+Créez les 8 bases dans PostgreSQL :
 ```sql
-CREATE DATABASE users_db;
-CREATE DATABASE orders_db;
-CREATE DATABASE delivery_db;
-CREATE DATABASE warehouses_db;
-CREATE DATABASE products_db;
-CREATE DATABASE notifications_db;
-CREATE DATABASE routes_db;
-CREATE DATABASE tracking_db;
+CREATE DATABASE users_db;        -- user-service
+CREATE DATABASE orders_db;       -- order-service
+CREATE DATABASE delivery_db;     -- delivery-service
+CREATE DATABASE warehouses_db;   -- warehouse-service
+CREATE DATABASE products_db;     -- product-service
+CREATE DATABASE notifications_db;-- notification-service
+CREATE DATABASE routes_db;       -- route-service
+CREATE DATABASE tracking_db;     -- tracking-service
 ```
 
-### 3. Compiler et lancer les services
-
-**Option A — Script automatique (Windows) :**
+### 3. Compiler tous les services (Windows)
 ```batch
 build-all.bat
+# Attend BUILD SUCCESS pour les 10 services
 ```
 
-**Option B — Manuellement (ordre obligatoire) :**
+### 4. Démarrer dans l'ordre
+
+> ⚠️ L'ordre de démarrage est crucial !
+
 ```bash
-# 1. Eureka Server (en premier !)
+# 1. PREMIER — Eureka Server (annuaire)
 cd discovery-service && mvn spring-boot:run
+# → http://localhost:8761 (Dashboard Eureka)
 
 # 2. API Gateway
 cd api-gateway && mvn spring-boot:run
+# → http://localhost:8888
 
-# 3. Tous les autres services
-cd user-service && mvn spring-boot:run
-cd order-service && mvn spring-boot:run
-# ... etc
-```
+# 3. Microservices (ordre libre)
+cd user-service && mvn spring-boot:run          # :8081
+cd order-service && mvn spring-boot:run         # :8082
+cd delivery-service && mvn spring-boot:run      # :8083
+cd warehouse-service && mvn spring-boot:run     # :8084
+cd tracking-service && mvn spring-boot:run      # :8086
+cd notification-service && mvn spring-boot:run  # :8087
+cd product-service && mvn spring-boot:run       # :8088
+cd route-service && mvn spring-boot:run         # :8089
 
-### 4. Lancer le Frontend
-```bash
-cd frontend
-npm install
-npm run dev
+# 4. Frontend React
+cd frontend && npm install && npm run dev
 # → http://localhost:5173
 ```
 
-### 5. Vérifier le bon fonctionnement
-| URL | Résultat attendu |
-|---|---|
-| http://localhost:8761 | Dashboard Eureka (liste des services) |
-| http://localhost:8888/api/products | Liste des produits (via Gateway) |
-| http://localhost:5173 | Interface Livrago |
+### 5. Variables d'environnement par service
+
+Chaque service `application.properties` utilise :
+```properties
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/users_db}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:postgres}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:}
+eureka.client.service-url.defaultZone=${EUREKA_URL:http://localhost:8761/eureka/}
+server.port=${PORT:8081}
+```
 
 ---
 
 ## ☁️ Déploiement en Production
 
-### Architecture Cloud (100% Gratuit)
+![Cloud Deployment Architecture](docs/deployment.png)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Vercel (Frontend React)                                 │
-│  → logistics-tracking-application.vercel.app            │
-└─────────────────────────────────────────────────────────┘
-                    │ VITE_API_BASE_URL
-                    ▼
-┌─────────────────────────────────────────────────────────┐
-│  HuggingFace Spaces (Docker, 9 services Java)           │
-│  → zakariaennaqui-livrago-gateway.hf.space              │
-│  → zakariaennaqui-livrago-discovery.hf.space            │
-│  → zakariaennaqui-livrago-user.hf.space                 │
-│  → ... (un Space par microservice)                      │
-└─────────────────────────────────────────────────────────┘
-                    │ SPRING_DATASOURCE_URL
-                    ▼
-┌─────────────────────────────────────────────────────────┐
-│  NeonDB (PostgreSQL Serverless, 8 bases)                │
-│  → ep-xxx.eu-west-2.aws.neon.tech                       │
-└─────────────────────────────────────────────────────────┘
-```
+### Architecture Cloud 100% Gratuite
+
+| Couche | Plateforme | Coût |
+|---|---|---|
+| Frontend React | **Vercel** | Gratuit |
+| 9 Microservices Java | **HuggingFace Spaces** (Docker) | Gratuit |
+| 8 Bases PostgreSQL | **NeonDB** (Serverless) | Gratuit |
 
 ### Pourquoi HuggingFace Spaces ?
-- ✅ **Gratuit et illimité** en nombre de services
+- ✅ **Illimité** en nombre de services (contrairement à Railway : 1 service)
 - ✅ **2 vCPU + 16 GB RAM** par Space
-- ✅ **Docker natif** — multi-stage build (compile le JAR en cloud)
-- ✅ Pas de limite de services comme Railway (1 service gratuit)
+- ✅ **Docker multi-stage** — compile le JAR directement dans le cloud
+- ✅ **Gratuit** — parfait pour les projets académiques
+
+### Dockerfile multi-stage utilisé
+```dockerfile
+# Stage 1 : Build depuis le code source dans le cloud
+FROM maven:3.9-eclipse-temurin-17-alpine AS builder
+WORKDIR /build
+COPY pom.xml .
+RUN mvn dependency:go-offline -B -q
+COPY src ./src
+RUN mvn clean package -DskipTests -q
+
+# Stage 2 : Image légère d'exécution
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=builder /build/target/*.jar app.jar
+EXPOSE 7860
+ENV PORT=7860
+ENTRYPOINT ["sh", "-c", "java -Xmx256m -jar app.jar"]
+```
 
 ---
 
-## 📁 Structure d'un Microservice
+## 📖 API Reference
 
-Chaque service suit la même structure Spring Boot :
+### Authentification
+```http
+POST /api/auth/login
+Content-Type: application/json
+{ "email": "user@test.com", "password": "password" }
+
+→ { "token": "eyJhbGc...", "role": "CLIENT", "userId": 42 }
+```
+
+### Commandes
+```http
+GET  /api/orders                    # Liste toutes les commandes (Admin)
+GET  /api/orders/client/{clientId}  # Commandes d'un client
+POST /api/orders                    # Créer une commande
+PUT  /api/orders/{id}/status        # Mettre à jour le statut
+```
+
+### Livraisons
+```http
+GET  /api/deliveries                     # Toutes les livraisons
+GET  /api/deliveries/livreur/{livreurId} # Livraisons d'un livreur
+PUT  /api/deliveries/{id}/status         # Mettre à jour le statut
+```
+
+### Tracking GPS
+```http
+POST /api/gps/position              # Envoyer une position GPS
+GET  /api/gps/{deliveryId}          # Historique des positions
+WS   /ws/tracking                   # WebSocket STOMP
+     → subscribe: /topic/tracking/{deliveryId}
+```
+
+### Produits & Entrepôts
+```http
+GET  /api/products                  # Catalogue produits
+GET  /api/categories                # Catégories
+GET  /api/warehouses                # Liste des entrepôts
+GET  /api/stocks/{warehouseId}      # Stock d'un entrepôt
+```
+
+---
+
+## 📁 Structure du Projet
 
 ```
-service-name/
-├── src/main/java/com/logistics/service_name/
-│   ├── ServiceApplication.java      # Point d'entrée @SpringBootApplication
-│   ├── config/                      # Configuration (CORS, Security, WebSocket...)
-│   ├── controller/                  # @RestController — endpoints REST
-│   ├── service/                     # @Service — logique métier
-│   ├── repository/                  # @Repository — accès base de données
-│   ├── model/                       # @Entity — tables JPA
-│   └── dtos/                        # DTOs Request/Response
-├── src/main/resources/
-│   └── application.properties       # Config (port, DB, Eureka...)
-├── pom.xml                          # Dépendances Maven
-└── Dockerfile                       # Build + Run Docker
+Logistics-Tracking-Application/
+├── 📂 discovery-service/       Eureka Server :8761
+├── 📂 api-gateway/             Spring Cloud Gateway :8888
+├── 📂 user-service/            Auth + Users :8081
+├── 📂 order-service/           Commandes :8082
+├── 📂 delivery-service/        Livraisons :8083
+├── 📂 warehouse-service/       Entrepôts :8084
+├── 📂 tracking-service/        GPS Tracking :8086
+├── 📂 notification-service/    Notifications :8087
+├── 📂 product-service/         Produits :8088
+├── 📂 route-service/           Itinéraires :8089
+├── 📂 frontend/                React + TypeScript :5173
+├── 📂 docs/                    Images & Schémas README
+├── 🐳 docker-compose.yml       Lancement local avec Docker
+├── 🔨 build-all.bat            Compilation automatique (Windows)
+├── 🚀 deploy-to-huggingface.bat Déploiement automatique
+└── 📖 README.md                Ce fichier
 ```
 
 ---
 
 <div align="center">
 
-**Zakaria Ennaqui** · ENSA Berrechid · JEE Project 2025
+**Zakaria Ennaqui** · Étudiant Génie Informatique · ENSA Berrechid · 2025
 
-[![GitHub](https://img.shields.io/badge/GitHub-zakariaennaqui-181717?style=flat&logo=github)](https://github.com/zakariaennaqui)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Zakaria_Ennaqui-0077B5?style=flat-square&logo=linkedin)](https://linkedin.com/in/zakaria-ennaqui-990883362)
+[![GitHub](https://img.shields.io/badge/GitHub-zakariaennaqui-181717?style=flat-square&logo=github)](https://github.com/zakariaennaqui)
+[![Portfolio](https://img.shields.io/badge/Portfolio-zakaria--ennaqui.vercel.app-00C7B7?style=flat-square)](https://zakaria-ennaqui.vercel.app)
 
 </div>
