@@ -8,16 +8,15 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: false, // This is crucial for CORS with authentication
+  withCredentials: true, // This is crucial for CORS with authentication
 });
 
 export const authService = {
   register: async (userData: RegisterRequest) => {
     try {
-      // const response = await api.post('/api/auth/register', userData, {
-      //   withCredentials: true
-      // });
-      const response = await api.post('/api/auth/register', userData);
+      const response = await api.post('/api/auth/register', userData, {
+        withCredentials: true
+      });
       return response.data;
     } catch (error: any) {
       console.error("Register error:", error);
@@ -46,7 +45,7 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     // Ensure credentials are included for all requests
-    config.withCredentials = false;
+    config.withCredentials = true;
     return config;
   },
   (error) => Promise.reject(error)
