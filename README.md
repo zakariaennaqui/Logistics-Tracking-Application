@@ -239,7 +239,7 @@ L'application gère **4 rôles** avec des permissions différentes via Spring Se
 
 ## Structure Interne d'un Microservice
 
-<!-- ![Microservice Internal Structure](docs/microservice.png) -->
+![Microservice Internal Structure](docs/microservice.png)
 
 Chaque service suit l'architecture en couches **MVC + Repository Pattern** :
 
