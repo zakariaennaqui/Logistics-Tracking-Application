@@ -160,8 +160,7 @@ spring:
 
 ## Authentification JWT & Spring Security
 
-<!-- ![JWT Authentication Flow](docs/jwt.png)
-![JWT Authentication Flow](docs/jwt_auth_flow_1782055887671.png) -->
+![JWT Authentication Flow](docs/jwt_auth_flow_1782055887671.png)
 
 ### Flux complet
 1. Client envoie `POST /api/auth/login` avec `{email, password}`
