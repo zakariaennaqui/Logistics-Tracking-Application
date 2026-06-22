@@ -160,8 +160,8 @@ spring:
 
 ## Authentification JWT & Spring Security
 
-![JWT Authentication Flow](docs/jwt.png)
-![JWT Authentication Flow](docs/jwt_auth_flow_1782055887671.png)
+<!-- ![JWT Authentication Flow](docs/jwt.png)
+![JWT Authentication Flow](docs/jwt_auth_flow_1782055887671.png) -->
 
 ### Flux complet
 1. Client envoie `POST /api/auth/login` avec `{email, password}`
@@ -583,7 +583,7 @@ public class Stock { Long id; Long entrepotId; Long productId; Integer quantite;
 
 ## Cycle de Vie d'une Commande
 
-![Order and Delivery Lifecycle](docs/order_lifecycle.png)
+<!-- ![Order and Delivery Lifecycle](docs/order_lifecycle.png) -->
 
 ### Statuts de Commande (`OrderStatus`)
 | Statut | Signification |
@@ -644,7 +644,7 @@ Réponse: { distanceKm: 87.3, durationMin: 72, etapes: [...] }
 
 ## Pages Frontend par Rôle
 
-![Frontend Pages by Role](docs/frontend_pages.png)
+<!-- ![Frontend Pages by Role](docs/frontend_pages.png) -->
 
 ### Landing Page (visiteurs non connectés)
 Composants : `Header`, `Hero`, `Features`, `Stats`, `Testimonial`, `CTASection`, `Footer`
