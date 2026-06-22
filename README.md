@@ -207,7 +207,7 @@ spring:
 
 ## Rôles Utilisateurs
 
-![User Roles and Permissions](docs/roles.png)
+<!-- ![User Roles and Permissions](docs/roles.png) -->
 
 L'application gère **4 rôles** avec des permissions différentes via Spring Security :
 
