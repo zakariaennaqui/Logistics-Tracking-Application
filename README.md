@@ -582,7 +582,7 @@ public class Stock { Long id; Long entrepotId; Long productId; Integer quantite;
 
 ## Cycle de Vie d'une Commande
 
-<!-- ![Order and Delivery Lifecycle](docs/order_lifecycle.png) -->
+![Order and Delivery Lifecycle](docs/order_lifecycle.png)
 
 ### Statuts de Commande (`OrderStatus`)
 | Statut | Signification |
